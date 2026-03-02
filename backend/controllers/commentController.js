@@ -1,0 +1,102 @@
+const Comment = require("../models/Comment");
+const Blog = require("../models/Blog");
+
+// @desc    Blog yazısına ait yorumları getir
+// @route   GET /api/comments/blog/:blogId
+// @access  Public
+const getCommentsByBlog = async (req, res) => {
+    try {
+        const comments = await Comment.find({ blog: req.params.blogId })
+            .populate("user", "username")
+            .sort({ createdAt: -1 });
+
+        res.json(comments);
+    } catch (error) {
+        res.status(500).json({ message: "Yorumlar getirilemedi", error: error.message });
+    }
+};
+
+// @desc    Yorum ekle
+// @route   POST /api/comments
+// @access  Private
+const createComment = async (req, res) => {
+    try {
+        const { content, blogId } = req.body;
+
+        // Blog var mı kontrol et
+        const blog = await Blog.findById(blogId);
+        if (!blog) {
+            return res.status(404).json({ message: "Blog yazısı bulunamadı" });
+        }
+
+        const comment = await Comment.create({
+            content,
+            blog: blogId,
+            user: req.user._id,
+        });
+
+        const populatedComment = await Comment.findById(comment._id).populate(
+            "user",
+            "username"
+        );
+
+        res.status(201).json(populatedComment);
+    } catch (error) {
+        res.status(500).json({ message: "Yorum eklenemedi", error: error.message });
+    }
+};
+
+// @desc    Yorum güncelle
+// @route   PUT /api/comments/:id
+// @access  Private (Yorum sahibi veya Admin)
+const updateComment = async (req, res) => {
+    try {
+        const comment = await Comment.findById(req.params.id);
+
+        if (!comment) {
+            return res.status(404).json({ message: "Yorum bulunamadı" });
+        }
+
+        // Sadece yorum sahibi veya admin güncelleyebilir
+        if (comment.user.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+            return res.status(403).json({ message: "Bu işlem için yetkiniz yok" });
+        }
+
+        comment.content = req.body.content || comment.content;
+        const updatedComment = await comment.save();
+
+        const populatedComment = await Comment.findById(updatedComment._id).populate(
+            "user",
+            "username"
+        );
+
+        res.json(populatedComment);
+    } catch (error) {
+        res.status(500).json({ message: "Yorum güncellenemedi", error: error.message });
+    }
+};
+
+// @desc    Yorum sil
+// @route   DELETE /api/comments/:id
+// @access  Private (Yorum sahibi veya Admin)
+const deleteComment = async (req, res) => {
+    try {
+        const comment = await Comment.findById(req.params.id);
+
+        if (!comment) {
+            return res.status(404).json({ message: "Yorum bulunamadı" });
+        }
+
+        // Sadece yorum sahibi veya admin silebilir
+        if (comment.user.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+            return res.status(403).json({ message: "Bu işlem için yetkiniz yok" });
+        }
+
+        await Comment.findByIdAndDelete(req.params.id);
+        res.json({ message: "Yorum başarıyla silindi" });
+    } catch (error) {
+        res.status(500).json({ message: "Yorum silinemedi", error: error.message });
+    }
+};
+
+module.exports = { getCommentsByBlog, createComment, updateComment, deleteComment };
