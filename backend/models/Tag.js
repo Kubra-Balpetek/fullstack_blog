@@ -18,7 +18,7 @@ const tagSchema = new mongoose.Schema(
 );
 
 // Kaydetmeden önce slug oluştur
-tagSchema.pre("save", function (next) {
+tagSchema.pre("save", function () {
     if (this.isModified("name")) {
         this.slug = this.name
             .toLowerCase()
@@ -26,7 +26,6 @@ tagSchema.pre("save", function (next) {
             .replace(/\s+/g, "-")
             .replace(/-+/g, "-");
     }
-    next();
 });
 
 module.exports = mongoose.model("Tag", tagSchema);

@@ -22,7 +22,7 @@ const categorySchema = new mongoose.Schema(
 );
 
 // Kaydetmeden önce slug oluştur
-categorySchema.pre("save", function (next) {
+categorySchema.pre("save", function () {
     if (this.isModified("name")) {
         this.slug = this.name
             .toLowerCase()
@@ -30,7 +30,6 @@ categorySchema.pre("save", function (next) {
             .replace(/\s+/g, "-")
             .replace(/-+/g, "-");
     }
-    next();
 });
 
 module.exports = mongoose.model("Category", categorySchema);
