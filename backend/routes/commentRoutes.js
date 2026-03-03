@@ -5,11 +5,13 @@ const {
     createComment,
     updateComment,
     deleteComment,
+    getReplies,
 } = require("../controllers/commentController");
 const { protect } = require("../middleware/authMiddleware");
 
 // Public
 router.get("/blog/:blogId", getCommentsByBlog);
+router.get("/:id/replies", getReplies);
 
 // Private
 router.post("/", protect, createComment);

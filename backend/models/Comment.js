@@ -17,6 +17,11 @@ const commentSchema = new mongoose.Schema(
             ref: "User",
             required: [true, "Kullanıcı referansı zorunludur"],
         },
+        parentComment: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Comment",
+            default: null,
+        },
     },
     { timestamps: true }
 );

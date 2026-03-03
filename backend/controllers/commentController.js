@@ -1,13 +1,17 @@
 const Comment = require("../models/Comment");
 const Blog = require("../models/Blog");
 
-// @desc    Blog yazısına ait yorumları getir
+// @desc    Blog yazısına ait yorumları getir (üst yorumlar + alt yorumlar/cevaplar)
 // @route   GET /api/comments/blog/:blogId
 // @access  Public
 const getCommentsByBlog = async (req, res) => {
     try {
         const comments = await Comment.find({ blog: req.params.blogId })
             .populate("user", "username")
+            .populate({
+                path: "parentComment",
+                populate: { path: "user", select: "username" },
+            })
             .sort({ createdAt: -1 });
 
         res.json(comments);
@@ -21,7 +25,7 @@ const getCommentsByBlog = async (req, res) => {
 // @access  Private
 const createComment = async (req, res) => {
     try {
-        const { content, blogId } = req.body;
+        const { content, blogId, parentCommentId } = req.body;
 
         // Blog var mı kontrol et
         const blog = await Blog.findById(blogId);
@@ -29,16 +33,27 @@ const createComment = async (req, res) => {
             return res.status(404).json({ message: "Blog yazısı bulunamadı" });
         }
 
+        // Eğer parentCommentId varsa, üst yorum var mı kontrol et
+        if (parentCommentId) {
+            const parentComment = await Comment.findById(parentCommentId);
+            if (!parentComment) {
+                return res.status(404).json({ message: "Cevap verilecek yorum bulunamadı" });
+            }
+        }
+
         const comment = await Comment.create({
             content,
             blog: blogId,
             user: req.user._id,
+            parentComment: parentCommentId || null,
         });
 
-        const populatedComment = await Comment.findById(comment._id).populate(
-            "user",
-            "username"
-        );
+        const populatedComment = await Comment.findById(comment._id)
+            .populate("user", "username")
+            .populate({
+                path: "parentComment",
+                populate: { path: "user", select: "username" },
+            });
 
         res.status(201).json(populatedComment);
     } catch (error) {
@@ -65,10 +80,12 @@ const updateComment = async (req, res) => {
         comment.content = req.body.content || comment.content;
         const updatedComment = await comment.save();
 
-        const populatedComment = await Comment.findById(updatedComment._id).populate(
-            "user",
-            "username"
-        );
+        const populatedComment = await Comment.findById(updatedComment._id)
+            .populate("user", "username")
+            .populate({
+                path: "parentComment",
+                populate: { path: "user", select: "username" },
+            });
 
         res.json(populatedComment);
     } catch (error) {
@@ -76,7 +93,7 @@ const updateComment = async (req, res) => {
     }
 };
 
-// @desc    Yorum sil
+// @desc    Yorum sil (alt yorumları da siler)
 // @route   DELETE /api/comments/:id
 // @access  Private (Yorum sahibi veya Admin)
 const deleteComment = async (req, res) => {
@@ -92,11 +109,29 @@ const deleteComment = async (req, res) => {
             return res.status(403).json({ message: "Bu işlem için yetkiniz yok" });
         }
 
+        // Alt yorumları da sil
+        await Comment.deleteMany({ parentComment: req.params.id });
         await Comment.findByIdAndDelete(req.params.id);
+
         res.json({ message: "Yorum başarıyla silindi" });
     } catch (error) {
         res.status(500).json({ message: "Yorum silinemedi", error: error.message });
     }
 };
 
-module.exports = { getCommentsByBlog, createComment, updateComment, deleteComment };
+// @desc    Bir yorumun cevaplarını getir
+// @route   GET /api/comments/:id/replies
+// @access  Public
+const getReplies = async (req, res) => {
+    try {
+        const replies = await Comment.find({ parentComment: req.params.id })
+            .populate("user", "username")
+            .sort({ createdAt: 1 });
+
+        res.json(replies);
+    } catch (error) {
+        res.status(500).json({ message: "Cevaplar getirilemedi", error: error.message });
+    }
+};
+
+module.exports = { getCommentsByBlog, createComment, updateComment, deleteComment, getReplies };
