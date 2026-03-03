@@ -84,7 +84,7 @@ export const likeBlog = createAsyncThunk(
     async (id, { rejectWithValue }) => {
         try {
             const { data } = await API.put(`/blogs/${id}/like`);
-            return { id, likes: data.likes };
+            return { id, likes: data.likes, likedBy: data.likedBy };
         } catch (error) {
             return rejectWithValue(
                 error.response?.data?.message || "Beğeni işlemi başarısız"
@@ -160,9 +160,13 @@ const blogSlice = createSlice({
             // Like
             .addCase(likeBlog.fulfilled, (state, action) => {
                 const blog = state.blogs.find((b) => b._id === action.payload.id);
-                if (blog) blog.likes = action.payload.likes;
+                if (blog) {
+                    blog.likes = action.payload.likes;
+                    blog.likedBy = action.payload.likedBy;
+                }
                 if (state.currentBlog?._id === action.payload.id) {
                     state.currentBlog.likes = action.payload.likes;
+                    state.currentBlog.likedBy = action.payload.likedBy;
                 }
             });
     },

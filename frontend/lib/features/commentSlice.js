@@ -1,34 +1,41 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import API from "@/lib/api";
+import API from "../api";
 
-// ---- Async Thunk'lar ----
-
-// Blog'a ait yorumları getir
+// Blog yazısına ait yorumları getir
 export const fetchCommentsByBlog = createAsyncThunk(
     "comment/fetchByBlog",
     async (blogId, { rejectWithValue }) => {
         try {
-            const { data } = await API.get(`/comments/blog/${blogId}`);
-            return data;
-        } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || "Yorumlar getirilemedi"
-            );
+            const res = await API.get(`/comments/blog/${blogId}`);
+            return res.data;
+        } catch (err) {
+            return rejectWithValue(err.response?.data?.message || "Yorumlar getirilemedi");
         }
     }
 );
 
-// Yorum ekle
+// Yorum ekle (opsiyonel parentCommentId ile cevap desteği)
 export const addComment = createAsyncThunk(
     "comment/add",
-    async ({ blogId, content }, { rejectWithValue }) => {
+    async ({ blogId, content, parentCommentId }, { rejectWithValue }) => {
         try {
-            const { data } = await API.post("/comments", { blogId, content });
-            return data;
-        } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || "Yorum eklenemedi"
-            );
+            const res = await API.post("/comments", { blogId, content, parentCommentId: parentCommentId || null });
+            return res.data;
+        } catch (err) {
+            return rejectWithValue(err.response?.data?.message || "Yorum eklenemedi");
+        }
+    }
+);
+
+// Bir yorumun cevaplarını getir
+export const fetchReplies = createAsyncThunk(
+    "comment/fetchReplies",
+    async (commentId, { rejectWithValue }) => {
+        try {
+            const res = await API.get(`/comments/${commentId}/replies`);
+            return { commentId, replies: res.data };
+        } catch (err) {
+            return rejectWithValue(err.response?.data?.message || "Cevaplar getirilemedi");
         }
     }
 );
@@ -38,12 +45,10 @@ export const updateComment = createAsyncThunk(
     "comment/update",
     async ({ id, content }, { rejectWithValue }) => {
         try {
-            const { data } = await API.put(`/comments/${id}`, { content });
-            return data;
-        } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || "Yorum güncellenemedi"
-            );
+            const res = await API.put(`/comments/${id}`, { content });
+            return res.data;
+        } catch (err) {
+            return rejectWithValue(err.response?.data?.message || "Yorum güncellenemedi");
         }
     }
 );
@@ -55,15 +60,24 @@ export const deleteComment = createAsyncThunk(
         try {
             await API.delete(`/comments/${id}`);
             return id;
-        } catch (error) {
-            return rejectWithValue(
-                error.response?.data?.message || "Yorum silinemedi"
-            );
+        } catch (err) {
+            return rejectWithValue(err.response?.data?.message || "Yorum silinemedi");
         }
     }
 );
 
-// ---- Slice ----
+// Yorum beğen / beğeniyi geri al
+export const likeComment = createAsyncThunk(
+    "comment/like",
+    async (commentId, { rejectWithValue }) => {
+        try {
+            const res = await API.put(`/comments/${commentId}/like`);
+            return res.data;
+        } catch (err) {
+            return rejectWithValue(err.response?.data?.message || "Beğeni işlemi başarısız");
+        }
+    }
+);
 
 const commentSlice = createSlice({
     name: "comment",
@@ -72,17 +86,10 @@ const commentSlice = createSlice({
         loading: false,
         error: null,
     },
-    reducers: {
-        clearComments: (state) => {
-            state.comments = [];
-        },
-        clearCommentError: (state) => {
-            state.error = null;
-        },
-    },
+    reducers: {},
     extraReducers: (builder) => {
         builder
-            // Fetch by Blog
+            // Fetch comments
             .addCase(fetchCommentsByBlog.pending, (state) => {
                 state.loading = true;
                 state.error = null;
@@ -95,23 +102,34 @@ const commentSlice = createSlice({
                 state.loading = false;
                 state.error = action.payload;
             })
-            // Add
+            // Add comment (or reply)
             .addCase(addComment.fulfilled, (state, action) => {
                 state.comments.unshift(action.payload);
             })
-            // Update
+            // Fetch replies
+            .addCase(fetchReplies.fulfilled, (state, action) => {
+                // Replies are already part of all comments list, no separate storage needed
+            })
+            // Update comment
             .addCase(updateComment.fulfilled, (state, action) => {
-                const index = state.comments.findIndex(
-                    (c) => c._id === action.payload._id
-                );
+                const index = state.comments.findIndex((c) => c._id === action.payload._id);
                 if (index !== -1) state.comments[index] = action.payload;
             })
-            // Delete
+            // Delete comment
             .addCase(deleteComment.fulfilled, (state, action) => {
-                state.comments = state.comments.filter((c) => c._id !== action.payload);
+                state.comments = state.comments.filter(
+                    (c) => c._id !== action.payload && c.parentComment?._id !== action.payload && c.parentComment !== action.payload
+                );
+            })
+            // Like comment
+            .addCase(likeComment.fulfilled, (state, action) => {
+                const index = state.comments.findIndex((c) => c._id === action.payload._id);
+                if (index !== -1) {
+                    state.comments[index].likes = action.payload.likes;
+                    state.comments[index].likedBy = action.payload.likedBy;
+                }
             });
     },
 });
 
-export const { clearComments, clearCommentError } = commentSlice.actions;
 export default commentSlice.reducer;

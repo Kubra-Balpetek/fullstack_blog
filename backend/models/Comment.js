@@ -22,6 +22,16 @@ const commentSchema = new mongoose.Schema(
             ref: "Comment",
             default: null,
         },
+        likes: {
+            type: Number,
+            default: 0,
+        },
+        likedBy: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "User",
+            },
+        ],
     },
     { timestamps: true }
 );

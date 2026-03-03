@@ -38,6 +38,15 @@ export default function Navbar() {
                             >
                                 Ana Sayfa
                             </Link>
+                            {token && user && (
+                                <Link
+                                    href="/write"
+                                    className="text-sm font-medium hover:text-primary-400 transition-colors"
+                                    style={{ color: "var(--text-secondary)" }}
+                                >
+                                    ✍️ Yazı Yaz
+                                </Link>
+                            )}
                             {token && user?.role === "admin" && (
                                 <Link
                                     href="/admin"
@@ -123,6 +132,16 @@ export default function Navbar() {
                             >
                                 Ana Sayfa
                             </Link>
+                            {token && user && (
+                                <Link
+                                    href="/write"
+                                    className="px-3 py-2 text-sm rounded-lg hover:bg-primary-600/10 transition-colors"
+                                    style={{ color: "var(--text-secondary)" }}
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    ✍️ Yazı Yaz
+                                </Link>
+                            )}
                             {token && user?.role === "admin" && (
                                 <Link
                                     href="/admin"

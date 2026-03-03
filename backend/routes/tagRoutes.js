@@ -11,8 +11,10 @@ const { protect, admin } = require("../middleware/authMiddleware");
 // Public
 router.get("/", getTags);
 
-// Private (Admin only)
-router.post("/", protect, admin, createTag);
+// Private (Giriş yapmış herkes tag oluşturabilir)
+router.post("/", protect, createTag);
+
+// Private (Admin only - güncelleme ve silme)
 router.put("/:id", protect, admin, updateTag);
 router.delete("/:id", protect, admin, deleteTag);
 

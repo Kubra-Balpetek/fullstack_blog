@@ -143,10 +143,20 @@ const likeBlog = async (req, res) => {
             return res.status(404).json({ message: "Blog yazısı bulunamadı" });
         }
 
+        const userId = req.user._id.toString();
+        const alreadyLiked = blog.likedBy.some(
+            (id) => id.toString() === userId
+        );
+
+        if (alreadyLiked) {
+            return res.status(400).json({ message: "Bu yazıyı zaten beğendiniz" });
+        }
+
+        blog.likedBy.push(req.user._id);
         blog.likes += 1;
         await blog.save();
 
-        res.json({ likes: blog.likes });
+        res.json({ likes: blog.likes, likedBy: blog.likedBy });
     } catch (error) {
         res.status(500).json({ message: "Beğeni işlemi başarısız", error: error.message });
     }

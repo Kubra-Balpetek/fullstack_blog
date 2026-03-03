@@ -21,7 +21,7 @@ export default function RootLayout({ children }) {
         <ReduxProvider>
           <ThemeProvider>
             <Navbar />
-            <main className="min-h-screen">{children}</main>
+            <main style={{ minHeight: "100vh", paddingTop: "80px" }}>{children}</main>
           </ThemeProvider>
         </ReduxProvider>
       </body>

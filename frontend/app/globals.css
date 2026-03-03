@@ -41,78 +41,133 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* ===== Dark Mode (default) ===== */
+/* ===== Dark Mode (Cyberpunk/Corporate Tech) ===== */
 [data-theme="dark"] {
-  --bg-primary: var(--color-surface-900);
-  --bg-secondary: var(--color-surface-800);
-  --bg-card: var(--color-surface-700);
-  --text-primary: #f1f5f9;
+  --bg-primary: #02020a;
+  --bg-secondary: #050512;
+  --bg-card: #0a0a16;
+  --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
-  --border-color: rgba(139, 92, 246, 0.2);
-  --glow-color: rgba(139, 92, 246, 0.15);
+  --border-color: rgba(160, 32, 240, 0.2);
+  --glow-color: rgba(160, 32, 240, 0.4);
   color-scheme: dark;
 }
 
 [data-theme="dark"] body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  background-image: radial-gradient(circle at 15% 50%, rgba(160, 32, 240, 0.05), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(14, 165, 233, 0.05), transparent 25%);
 }
 
 /* ===== Light Mode ===== */
 [data-theme="light"] {
   --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
+  --bg-secondary: #f1f5f9;
   --bg-card: #ffffff;
   --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --border-color: rgba(139, 92, 246, 0.15);
-  --glow-color: rgba(139, 92, 246, 0.08);
+  --text-secondary: #334155;
+  --border-color: rgba(160, 32, 240, 0.2);
+  --glow-color: rgba(160, 32, 240, 0.1);
   color-scheme: light;
 }
 
 [data-theme="light"] body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  background-image: radial-gradient(circle at 15% 50%, rgba(160, 32, 240, 0.03), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(14, 165, 233, 0.03), transparent 25%);
 }
 
 /* ===== Glassmorphism Utility ===== */
 .glass {
-  background: rgba(30, 30, 58, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(5, 5, 18, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-color);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="light"] .glass {
   background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
-/* ===== Glow Effects ===== */
+/* ===== Glow Effects & Cyberpunk Accents ===== */
 .glow-purple {
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 60px rgba(139, 92, 246, 0.1);
+  box-shadow: 0 0 25px rgba(160, 32, 240, 0.3), 0 0 80px rgba(160, 32, 240, 0.1);
+}
+
+.glow-blue {
+  box-shadow: 0 0 25px rgba(14, 165, 233, 0.3), 0 0 80px rgba(14, 165, 233, 0.1);
 }
 
 .glow-border {
-  border: 1px solid transparent;
+  border: 1px solid rgba(160, 32, 240, 0.15);
   background-clip: padding-box;
   position: relative;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.glow-border::before {
-  content: '';
+.glow-border:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px -10px rgba(160, 32, 240, 0.3);
+  border-color: rgba(160, 32, 240, 0.5);
+  z-index: 10;
+}
+
+/* ===== Hero Fiber Background ===== */
+.hero-fiber {
+  background:
+    radial-gradient(ellipse at bottom, #1b2735 0%, #02020a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-fiber::before,
+.hero-fiber::after {
+  content: "";
   position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  background: linear-gradient(135deg, var(--color-primary-600), var(--color-accent-500), var(--color-primary-600));
-  z-index: -1;
-  opacity: 0.5;
-  transition: opacity 0.3s ease;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(160, 32, 240, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.1) 0%, transparent 40%);
+  animation: pulseFiber 15s ease-in-out infinite alternate;
 }
 
-.glow-border:hover::before {
-  opacity: 1;
+.hero-fiber::after {
+  background-image:
+    linear-gradient(45deg, transparent 40%, rgba(160, 32, 240, 0.03) 45%, rgba(14, 165, 233, 0.05) 50%, rgba(160, 32, 240, 0.03) 55%, transparent 60%);
+  background-size: 200% 200%;
+  animation: waveFiber 20s linear infinite;
+}
+
+@keyframes pulseFiber {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.5;
+  }
+
+  100% {
+    transform: scale(1.2) rotate(5deg);
+    opacity: 1;
+  }
+}
+
+@keyframes waveFiber {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 200% 200%;
+  }
 }
 
 /* ===== Gradient Text  ===== */

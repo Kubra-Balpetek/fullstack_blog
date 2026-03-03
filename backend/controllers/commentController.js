@@ -134,4 +134,34 @@ const getReplies = async (req, res) => {
     }
 };
 
-module.exports = { getCommentsByBlog, createComment, updateComment, deleteComment, getReplies };
+// @desc    Yorumu beğen (sadece bir kez)
+// @route   PUT /api/comments/:id/like
+// @access  Private
+const likeComment = async (req, res) => {
+    try {
+        const comment = await Comment.findById(req.params.id);
+
+        if (!comment) {
+            return res.status(404).json({ message: "Yorum bulunamadı" });
+        }
+
+        const userId = req.user._id.toString();
+        const alreadyLiked = comment.likedBy.some(
+            (id) => id.toString() === userId
+        );
+
+        if (alreadyLiked) {
+            return res.status(400).json({ message: "Bu yorumu zaten beğendiniz" });
+        }
+
+        comment.likedBy.push(req.user._id);
+        comment.likes += 1;
+        await comment.save();
+
+        res.json({ _id: comment._id, likes: comment.likes, likedBy: comment.likedBy });
+    } catch (error) {
+        res.status(500).json({ message: "Beğeni işlemi başarısız", error: error.message });
+    }
+};
+
+module.exports = { getCommentsByBlog, createComment, updateComment, deleteComment, getReplies, likeComment };

@@ -6,6 +6,7 @@ const {
     updateComment,
     deleteComment,
     getReplies,
+    likeComment,
 } = require("../controllers/commentController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -17,5 +18,6 @@ router.get("/:id/replies", getReplies);
 router.post("/", protect, createComment);
 router.put("/:id", protect, updateComment);
 router.delete("/:id", protect, deleteComment);
+router.put("/:id/like", protect, likeComment);
 
 module.exports = router;
